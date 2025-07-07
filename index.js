@@ -2,37 +2,44 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 
 exports.handler = async (event) => {
-  const URL = 'https://www.xscores.com/soccer/bolivia/primera-division/fixtures';
+	const URL = 'https://www.xscores.com/soccer/bolivia/primera-division/fixtures';
 
-  try {
-    const { data } = await axios.get(URL, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0', // importante para evitar bloqueo
-      },
-    });
+	try {
+		const {data} = await axios.get(URL, {
+			headers: {
+				'User-Agent': 'Mozilla/5.0', // evitar bloqueos por parte del sitio
+			},
+		});
 
-    const $ = cheerio.load(data);
-    const matches = [];
+		const $ = cheerio.load(data);
+		const matches = [];
 
-    $('div.content table.soccer tbody tr').each((_, el) => {
-      const date = $(el).find('td.date').text().trim();
-      const time = $(el).find('td.time').text().trim();
-      const home = $(el).find('td.team-home a').text().trim();
-      const away = $(el).find('td.team-away a').text().trim();
+		$('a.ind_match_wrapper').each((_, el) => {
+			const matchElement = $(el);
 
-      if (home && away) {
-        matches.push({ date, time, home, away });
-      }
-    });
+			// Extraer la fecha desde el href
+			const href = matchElement.attr('href') || '';
+			const dateMatch = href.match(/\d{2}-\d{2}-\d{4}/);
+			const date = dateMatch ? dateMatch[0] : null;
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ matches }),
-    };
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
-    };
-  }
+			// Extraer equipos
+			const home = matchElement.find('.match_home .wrap').first().text().trim();
+			const away = matchElement.find('.match_away .wrap').first().text().trim();
+
+			// Agregar si los datos están completos
+			if (home && away && date) {
+				matches.push({date, home, away});
+			}
+		});
+
+		return {
+			statusCode: 200,
+			body: JSON.stringify({matches}),
+		};
+	} catch (err) {
+		return {
+			statusCode: 500,
+			body: JSON.stringify({error: err.message}),
+		};
+	}
 };
