@@ -3,7 +3,7 @@ name: Build and Push Docker Image to ECR
 on:
   push:
     branches:
-      - master  # O la rama que prefieras
+      - master  # O la rama que prefieras.
 
 jobs:
   build-and-push:
