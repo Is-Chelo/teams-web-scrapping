@@ -2,7 +2,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 
 exports.handler = async (event) => {
-	const URL = 'https://www.espn.com.ve/futbol/calendario/_/liga/bol.1';
+	const URL = 'https://www.espn.com.ar/futbol/calendario/_/liga/bol.1';
 	try {
 		const {data} = await axios.get(URL, {
 			headers: {
