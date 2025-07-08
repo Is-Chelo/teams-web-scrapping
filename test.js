@@ -1,9 +1,9 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-exports.handler = async (event) => {
-	const URL = 'https://www.xscores.com/soccer/bolivia/primera-division/fixtures';
+const URL = 'https://www.espn.com.ve/futbol/calendario/_/liga/bol.1';
 
+async function fetchFixtures() {
 	try {
 		const {data} = await axios.get(URL, {
 			headers: {
@@ -13,11 +13,12 @@ exports.handler = async (event) => {
 		});
 
 		const matches = [];
+
 		const $ = cheerio.load(data);
 
 		$('.ScheduleTables.mb5.ScheduleTables--.ScheduleTables--soccer').each((_, el) => {
 			const date = $(el).find('.Table__Title').first().text().trim();
-
+			
 			$(el)
 				.find('table tbody tr')
 				.each((_, row) => {
@@ -39,14 +40,11 @@ exports.handler = async (event) => {
 				});
 		});
 
-		return {
-			statusCode: 200,
-			body: JSON.stringify({matches}),
-		};
+		console.log(matches);
 	} catch (err) {
-		return {
-			statusCode: 500,
-			body: JSON.stringify({error: err.message}),
-		};
+		console.log(err);
+		console.error('❌ Error al obtener partidos:', err.message);
 	}
-};
+}
+
+fetchFixtures();
