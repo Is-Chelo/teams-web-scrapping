@@ -1,3 +1,5 @@
+const {fetchFixtures} = require('./src/services/Fixture');
+
 exports.handler = async (event) => {
 	let url = 'https://www.flashscore.es/futbol/bolivia/copa-pacena/partidos/'; // URL por defecto
 
@@ -5,7 +7,7 @@ exports.handler = async (event) => {
 	if (event.body) {
 		try {
 			const parsed = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
-			url = parsed.url || url; 
+			url = parsed.url || url;
 		} catch (err) {
 			url = event.body; // Si el body no es JSON, considerar el body como una URL
 		}
@@ -21,6 +23,7 @@ exports.handler = async (event) => {
 			body: JSON.stringify(result),
 		};
 	} catch (error) {
+		console.log(error);
 		console.error('Error al obtener los fixtures:', error);
 		return {
 			statusCode: 500,
