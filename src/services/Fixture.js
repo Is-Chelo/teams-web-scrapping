@@ -5,7 +5,12 @@ const chromium = require('chrome-aws-lambda');
 
 const fetchFixtures = async (URL) => {
 	try {
-		const browser = await chromium.puppeteer.launch({headless: true}); // Lanza el navegador sin interfaz gráfica
+		const browser = await chromium.puppeteer.launch({
+			args: chromium.args,
+			defaultViewport: chromium.defaultViewport,
+			executablePath: await chromium.executablePath,
+			headless: chromium.headless,
+		}); // Lanza el navegador sin interfaz gráfica
 		const page = await browser.newPage();
 		await page.goto(URL, {waitUntil: 'networkidle2'}); // Espera a que se haya cargado completamente la página
 
