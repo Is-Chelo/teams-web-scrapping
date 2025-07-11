@@ -1,26 +1,20 @@
+// const axios = require('axios');
 const cheerio = require('cheerio');
+// const puppeteer = require('puppeteer');
 const chromium = require('chrome-aws-lambda');
-const puppeteer = chromium.puppeteer;
 
 const fetchFixtures = async (URL) => {
 	try {
-		const browser = await puppeteer.launch({
-			args: chromium.args,
-			defaultViewport: chromium.defaultViewport,
-			executablePath: await chromium.executablePath,
-			headless: chromium.headless,
-		});
-
+		const browser = await chromium.puppeteer.launch({headless: true}); // Lanza el navegador sin interfaz gráfica
 		const page = await browser.newPage();
+		await page.goto(URL, {waitUntil: 'networkidle2'}); // Espera a que se haya cargado completamente la página
 
-		// Hacer que Puppeteer espere explícitamente un selector y aumentar el timeout
-		await page.goto(URL, {waitUntil: 'networkidle2', timeout: 60000}); // 60 segundos
-		await page.waitForSelector('.event__match', {timeout: 60000}); // Espera explícita
+		const html = await page.content(); // Obtiene el HTML renderizado por el navegador
+		const $ = cheerio.load(html); // Carga el HTML en Cheerio para parsearlo
 
-		const html = await page.content();
-		const $ = cheerio.load(html);
+		const matches = []; // Array para guardar los partidos
 
-		const matches = [];
+		// Recorremos cada contenedor de partidos
 		$('.event__match').each((_, element) => {
 			const dateTime = $(element).find('.event__time').text().trim();
 			const partsDateTime = dateTime.split('.');
@@ -52,15 +46,17 @@ const fetchFixtures = async (URL) => {
 			});
 		});
 
-		await browser.close();
+		// Muestra los fixtures encontrados
+		await browser.close(); // Cierra el navegador
 		return matches;
 	} catch (err) {
 		console.error('❌ Error al obtener partidos:', err.message);
-		throw err;
 	}
 };
 
+// Función para obtener todos los fixtures de los 4 enlaces
 const getAllFixtures = async () => {
+	// Array de URLs y nombres de torneos
 	const tournaments = [
 		{
 			url: 'https://www.flashscore.es/futbol/bolivia/copa-pacena/partidos/',
