@@ -1,4 +1,3 @@
-// const axios = require('axios');
 const cheerio = require('cheerio');
 const chromium = require('chrome-aws-lambda');
 const puppeteer = chromium.puppeteer;
@@ -6,11 +5,12 @@ const puppeteer = chromium.puppeteer;
 const fetchFixtures = async (URL) => {
 	try {
 		const browser = await puppeteer.launch({
-			args: chromium.args,
-			defaultViewport: chromium.defaultViewport,
-			executablePath: await chromium.executablePath,
-			headless: chromium.headless,
+			args: chromium.args, // Asegúrate de que esté usando los argumentos correctos
+			defaultViewport: chromium.defaultViewport, // Usa la configuración de viewport por defecto de chrome-aws-lambda
+			executablePath: await chromium.executablePath, // Obtiene el path del ejecutable de Chromium para Lambda
+			headless: chromium.headless, // Se asegura de que se ejecute en modo headless
 		});
+
 		const page = await browser.newPage();
 		await page.goto(URL, {waitUntil: 'networkidle2'}); // Espera a que se haya cargado completamente la página
 
@@ -51,17 +51,15 @@ const fetchFixtures = async (URL) => {
 			});
 		});
 
-		// Muestra los fixtures encontrados
 		await browser.close(); // Cierra el navegador
 		return matches;
 	} catch (err) {
 		console.error('❌ Error al obtener partidos:', err.message);
+		throw err; // Propaga el error para que lo pueda manejar el invocador
 	}
 };
 
-// Función para obtener todos los fixtures de los 4 enlaces
 const getAllFixtures = async () => {
-	// Array de URLs y nombres de torneos
 	const tournaments = [
 		{
 			url: 'https://www.flashscore.es/futbol/bolivia/copa-pacena/partidos/',
