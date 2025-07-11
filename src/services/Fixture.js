@@ -5,21 +5,22 @@ const puppeteer = chromium.puppeteer;
 const fetchFixtures = async (URL) => {
 	try {
 		const browser = await puppeteer.launch({
-			args: chromium.args, // Asegúrate de que esté usando los argumentos correctos
-			defaultViewport: chromium.defaultViewport, // Usa la configuración de viewport por defecto de chrome-aws-lambda
-			executablePath: await chromium.executablePath, // Obtiene el path del ejecutable de Chromium para Lambda
-			headless: chromium.headless, // Se asegura de que se ejecute en modo headless
+			args: chromium.args,
+			defaultViewport: chromium.defaultViewport,
+			executablePath: await chromium.executablePath,
+			headless: chromium.headless,
 		});
 
 		const page = await browser.newPage();
-		await page.goto(URL, {waitUntil: 'networkidle2'}); // Espera a que se haya cargado completamente la página
 
-		const html = await page.content(); // Obtiene el HTML renderizado por el navegador
-		const $ = cheerio.load(html); // Carga el HTML en Cheerio para parsearlo
+		// Hacer que Puppeteer espere explícitamente un selector y aumentar el timeout
+		await page.goto(URL, {waitUntil: 'networkidle2', timeout: 60000}); // 60 segundos
+		await page.waitForSelector('.event__match', {timeout: 60000}); // Espera explícita
 
-		const matches = []; // Array para guardar los partidos
+		const html = await page.content();
+		const $ = cheerio.load(html);
 
-		// Recorremos cada contenedor de partidos
+		const matches = [];
 		$('.event__match').each((_, element) => {
 			const dateTime = $(element).find('.event__time').text().trim();
 			const partsDateTime = dateTime.split('.');
@@ -51,11 +52,11 @@ const fetchFixtures = async (URL) => {
 			});
 		});
 
-		await browser.close(); // Cierra el navegador
+		await browser.close();
 		return matches;
 	} catch (err) {
 		console.error('❌ Error al obtener partidos:', err.message);
-		throw err; // Propaga el error para que lo pueda manejar el invocador
+		throw err;
 	}
 };
 
