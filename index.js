@@ -1,6 +1,3 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
-
 exports.handler = async (event) => {
 	let url = 'https://www.flashscore.es/futbol/bolivia/copa-pacena/partidos/'; // URL por defecto
 
