@@ -6,18 +6,37 @@ const chromium = require('chrome-aws-lambda');
 const fetchFixtures = async (URL) => {
 	try {
 		const browser = await chromium.puppeteer.launch({
-			args: chromium.args,
-			defaultViewport: chromium.defaultViewport,
+			// args: chromium.args,
+			// defaultViewport: chromium.defaultViewport,
 			executablePath: await chromium.executablePath,
-			headless: chromium.headless,
-		}); // Lanza el navegador sin interfaz gráfica
+			headless: false,
+		});
+
 		const page = await browser.newPage();
-		await page.goto(URL, {waitUntil: 'networkidle2'}); // Espera a que se haya cargado completamente la página
 
-		const html = await page.content(); // Obtiene el HTML renderizado por el navegador
-		const $ = cheerio.load(html); // Carga el HTML en Cheerio para parsearlo
+		// Configurar para bloquear imágenes y otros recursos pesados
+		await page.setRequestInterception(true);
+		page.on('request', (request) => {
+			if (request.resourceType() === 'image' || request.resourceType() === 'stylesheet') {
+				request.abort();
+			} else {
+				request.continue();
+			}
+		});
 
-		const matches = []; // Array para guardar los partidos
+		// Aumentar el tiempo de espera
+		await page.goto(URL, {
+			waitUntil: 'networkidle2',
+			timeout: 120000, // 120 segundos (más tiempo para que la página cargue)
+		});
+
+		// Esperar hasta que el selector esté presente
+		await page.waitForSelector('.event__match', {timeout: 120000}); // 120 segundos
+
+		const html = await page.content();
+		const $ = cheerio.load(html);
+
+		const matches = [];
 
 		// Recorremos cada contenedor de partidos
 		$('.event__match').each((_, element) => {
@@ -51,11 +70,11 @@ const fetchFixtures = async (URL) => {
 			});
 		});
 
-		// Muestra los fixtures encontrados
 		await browser.close(); // Cierra el navegador
 		return matches;
 	} catch (err) {
 		console.error('❌ Error al obtener partidos:', err.message);
+		throw err;
 	}
 };
 
